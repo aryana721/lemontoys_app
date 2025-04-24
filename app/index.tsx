@@ -1,21 +1,37 @@
-import { Redirect } from 'expo-router';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+
+import { useAuth } from '@/Providers/AuthProvider';
 
 export default function Index() {
-  const [isReady, setIsReady] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { loggedIn, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    const checkLogin = async () => {
-    //   const user = await AsyncStorage.getItem('user');
-    //   setIsLoggedIn(!!user);
-      setIsReady(false);
-    };
-    checkLogin();
-  }, []);
+    if (!loading) {
+      const targetRoute = loggedIn ? '/Home' : '/Login';
+      console.log('Navigating to:', targetRoute);
+      router.replace(targetRoute);
+    }
+  }, [loading, loggedIn]);
 
-//   if (!isReady) return null;
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
-  return <Redirect href={isLoggedIn ? '/(tabs)' : '/Login'} />;
+  // Optional fallback UI if not redirected instantly
+  return null;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

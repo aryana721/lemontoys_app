@@ -30,6 +30,7 @@ export default function TabLayout() {
         name="Home"
         options={{
           title: 'Home',
+          
           tabBarIcon: ({ color }) => 
           <FontAwesome
             name="home"
@@ -37,26 +38,28 @@ export default function TabLayout() {
             color={Colors[colorScheme ?? 'light'].text}
             // style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
           /> ,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          headerShown: false,
+          // headerRight: () => (
+          //   <Link href="/modal" asChild>
+          //     <Pressable>
+          //       {({ pressed }) => (
+          //         <FontAwesome
+          //           name="info-circle"
+          //           size={25}
+          //           color={Colors[colorScheme ?? 'light'].text}
+          //           style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+          //         />
+          //       )}
+          //     </Pressable>
+          //   </Link>
+          // ),
         }}
       />
       <Tabs.Screen
         name="Search"
         options={{
           title: 'Search',
+          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome
           name="search"
           size={25}
@@ -69,6 +72,7 @@ export default function TabLayout() {
         name="Cart"
         options={{
           title: 'Cart',
+          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome
           name="shopping-cart"
           size={25}
@@ -81,6 +85,7 @@ export default function TabLayout() {
         name="Profile"
         options={{
           title: 'Profile',
+          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome
           name="user"
           size={25}
