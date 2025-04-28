@@ -105,7 +105,7 @@ const [password, setPassword] = useState(userData?.password || '');
       return;
     }
 
-    const url = `http://192.168.1.11:3000/updateUser/${userData?._id}`;
+    const url = `${process.env.EXPO_PUBLIC_HOST}/updateUser/${userData?._id}`;
     console.log(url)
     const updatedData = {
       name,
@@ -175,7 +175,7 @@ const [password, setPassword] = useState(userData?.password || '');
           <View style={styles.profileContainer}>
             <View style={styles.avatarContainer}>
               <Image
-                source={require('../../assets/images/avatar-placeholder.jpg')}
+                source={require('../../assets/images/user2.gif')}
                 style={styles.avatar}
                 defaultSource={require('../../assets/images/avatar-placeholder.jpg')}
               />
