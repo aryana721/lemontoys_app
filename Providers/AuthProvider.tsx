@@ -29,7 +29,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     const checkLogin = async () => {
       try {
         const user = await AsyncStorage.getItem('userData');
-        console.log('Stored user:',user);
+       
         setData(user);
         setLoggedIn(!!user);
       } catch (error) {

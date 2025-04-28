@@ -49,7 +49,6 @@ const Login: React.FC = () => {
     }
 
     const url = `${process.env.EXPO_PUBLIC_HOST}/login`;
-    console.log(url)
     const Data: data = {
       identifier,
       password
@@ -59,15 +58,15 @@ const Login: React.FC = () => {
 
     axios.post(url, Data)
     .then((response) => {
-      console.log('User logged in:', { identifier, password });
+
   
       const userData = response.data?.data;
-      console.log('User data:', userData);
+     
   
       if (userData) {
         AsyncStorage.setItem('userData', JSON.stringify(userData))
           .then(() => {
-            console.log('User data stored in AsyncStorage:', userData);
+          
             setData(userData);
             router.replace('/Home');
           })

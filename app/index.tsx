@@ -11,7 +11,7 @@ export default function Index() {
   useEffect(() => {
     if (!loading) {
       const targetRoute = loggedIn ? '/Home' : '/Login';
-      console.log('Navigating to:', targetRoute);
+      
       router.replace(targetRoute);
     }
   }, [loading, loggedIn]);

@@ -68,7 +68,7 @@
           }
           axios.post(url, Data)
             .then(function (response) {
-              console.log('User registered:', { name, email, mobile, address, password });
+              
               setLoading(false);
               alert('User Created Successfully.');
               router.replace('/Login'); // Redirect to Login page after registration

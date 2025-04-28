@@ -71,7 +71,6 @@ const Profile = () => {
 
 const userData = typeof data === 'string' ? JSON.parse(data) : data;
 
-console.log("Parsed userData:", userData);
 
 const [name, setName] = useState(userData?.name || 'Guest User');
 const [email, setEmail] = useState(userData?.email?.toString() || '');
@@ -106,7 +105,6 @@ const [password, setPassword] = useState(userData?.password || '');
     }
 
     const url = `${process.env.EXPO_PUBLIC_HOST}/updateUser/${userData?._id}`;
-    console.log(url)
     const updatedData = {
       name,
       email,
@@ -123,11 +121,11 @@ const [password, setPassword] = useState(userData?.password || '');
       // setData(updatedUser.data);
 
       // Store in AsyncStorage
-      console.log("first",updatedUser)
+    
       
       await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
 
-      console.log('User data updated and stored:', updatedUser);
+     
       alert('Profile updated successfully.');
       setIsEditing(false);
     } catch (error) {

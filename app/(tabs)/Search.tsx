@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/Providers/AuthProvider';
 import axios from 'axios';
 import { useCart } from '@/Providers/CartProvider';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -29,13 +30,13 @@ export default function TabTwoScreen() {
   const [isDropdownVisible, setDropdownVisible] = useState(false);
 
 
-  console.log(CartItems)
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log(`${process.env.EXPO_PUBLIC_HOST}/products`)
+        
         const response = await axios.get(`${process.env.EXPO_PUBLIC_HOST}/products`);
         const mappedProducts = response.data.data.map((product: any) => ({
           id: product._id, // assuming MongoDB _id
@@ -111,13 +112,13 @@ export default function TabTwoScreen() {
     }
 
 
-    const userCategory = JSON.parse(data || '{}').category;
-    const priceKey = categoryPriceMap[userCategory] || '';
+    const userCategory = typeof data === 'string' ? JSON.parse(data).category as keyof typeof categoryPriceMap : undefined;
+    const priceKey = userCategory ? categoryPriceMap[userCategory] : '';
     const price = item.price + (item[priceKey] || 0);
     
     
     return (
-      <View style={styles.card}>
+      <SafeAreaView style={styles.card}>
         <Image source={item.image} style={styles.productImage} />
         <View style={styles.infoContainer}>
           <Text style={styles.productName}>{item.name}</Text>
@@ -140,7 +141,7 @@ export default function TabTwoScreen() {
             </View>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     );
   };
 
@@ -167,7 +168,7 @@ export default function TabTwoScreen() {
     );
   };
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
       {/* Top Section */}
@@ -272,7 +273,7 @@ export default function TabTwoScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />)}
-    </View>
+    </SafeAreaView>
   );
 }
 
