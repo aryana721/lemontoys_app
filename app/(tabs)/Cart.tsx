@@ -1,33 +1,95 @@
 import { View, Text, Image, FlatList, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/Providers/CartProvider';
-import LottieView from 'lottie-react-native'; // << New import
+import LottieView from 'lottie-react-native'; 
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useAuth } from '@/Providers/AuthProvider';
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 const { width } = Dimensions.get('window');
+const categoryPriceMap = {
+  A: 'PriceA',
+  B: 'PriceB',
+  C: 'PriceC',
+  D: 'PriceD',
+};
 
 export default function Cart() {
-  const { CartItems, AddToCart, RemoveFromCart } = useCart();
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleOrderPlacement = () => {
+    setShowAlert(true);  
+  };
+
+  const { CartItems, AddToCart, RemoveFromCart, deleteFromCart } = useCart();
+  interface CartItem {
+    _id: string;
+    ProductImageURL: string;
+    ProductName: string;
+    Category: string;
+    Price: number;
+    [key: string]: any; 
+    quantity: number;
+    qrCodeUrl?: string;
+  }
+
+  const [detailedCartItems, setDetailedCartItems] = useState<CartItem[]>([]);
+  const { data } = useAuth();
+  const userCategory = typeof data === 'string' ? JSON.parse(data).category as keyof typeof categoryPriceMap : undefined;
+
+  const priceKey = userCategory ? categoryPriceMap[userCategory] : '';
 
   const calculateSubtotal = () => {
-    return CartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return detailedCartItems.reduce((total, item) => {
+      const price = (item.Price || 0) + (item[priceKey] || 0); 
+      return total + price * item.quantity;
+    }, 0);
   };
+
+  useEffect(() => {
+    const fetchCartDetails = async () => {
+      if (CartItems.length === 0) {
+        setDetailedCartItems([]);
+        return;
+      }
+
+      try {
+        const productIds = CartItems.map(item => item.productId);
+        const response = await axios.post(`${process.env.EXPO_PUBLIC_HOST}/details`, {
+          itemIds: productIds,
+        });
+
+        const detailedData = response.data.map((item: any) => {
+          const match = CartItems.find((c) => c.productId === item._id);
+          return {
+            ...item,
+            quantity: match?.quantity || 1,
+          };
+        });
+
+        setDetailedCartItems(detailedData);
+      } catch (error) {
+        console.error('Failed to fetch cart details:', error);
+      }
+    };
+
+    fetchCartDetails();
+  }, [CartItems]);
 
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.cartItem}>
-      {/* Product Image */}
       <Image
-        source={{ uri: item.image.uri }}
+        source={{ uri: item.ProductImageURL }}
         style={styles.productImage}
         resizeMode="contain"
       />
-  
-      {/* Product Info */}
       <View style={styles.productInfo}>
-        <Text style={styles.title}>{item.name}</Text>
-        <Text style={styles.subtitle}>{item.category}</Text>
-        <Text style={styles.price}>₹{item.price}</Text>
-  
-        {/* Quantity Control */}
+        <Text style={styles.title}>{item.ProductName}</Text>
+        <Text style={styles.subtitle}>{item.Category}</Text>
+        <Text style={styles.price}>
+          ₹{item[priceKey] + item.Price}
+        </Text>
         <View style={styles.quantityControl}>
           <TouchableOpacity onPress={() => RemoveFromCart(item)}>
             <Ionicons name="remove-circle-outline" size={24} color="#0d9488" />
@@ -40,21 +102,17 @@ export default function Cart() {
           </TouchableOpacity>
         </View>
       </View>
-  
-      {/* QR Code Image */}
       <Image
         source={{ uri: item.qrCodeUrl }}
         style={styles.qrCodeImage}
         resizeMode="contain"
       />
-  
-      {/* Delete Icon */}
-      <TouchableOpacity style={styles.deleteIcon} onPress={() => RemoveFromCart({ ...item, quantity: item.quantity })}>
+      <TouchableOpacity style={styles.deleteIcon} onPress={() => deleteFromCart(item)}>
         <Ionicons name="trash-outline" size={24} color="red" />
       </TouchableOpacity>
     </View>
   );
-  
+
   if (CartItems.length === 0) {
     return (
       <View style={styles.emptyCartContainer}>
@@ -68,11 +126,12 @@ export default function Cart() {
       </View>
     );
   }
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={CartItems}
-        keyExtractor={(item) => item.id.toString()}
+        data={detailedCartItems}
+        keyExtractor={(item) => item._id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16 }}
         ListFooterComponent={
@@ -90,16 +149,28 @@ export default function Cart() {
               <Text style={styles.totalText}>Total</Text>
               <Text style={styles.totalText}>₹{calculateSubtotal()}</Text>
             </View>
-            <TouchableOpacity style={styles.placeOrderButton}>
+            <TouchableOpacity style={styles.placeOrderButton} onPress={handleOrderPlacement}>
               <Text style={styles.placeOrderText}>Place Order</Text>
             </TouchableOpacity>
           </View>
         }
       />
+      
+      {/* Awesome Alert Component */}
+      <AwesomeAlert
+        show={showAlert}
+        title="Order Placed!"
+        message="Your order has been successfully placed. We'll notify you once it's shipped."
+        closeOnTouchOutside={false}
+        closeOnHardwareBackPress={false}
+        showConfirmButton={true}
+        confirmText="OK"
+        confirmButtonColor="#084C61"
+        onConfirmPressed={() => setShowAlert(false)}
+      />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -123,8 +194,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     borderRadius: 8,
   },
-  
-  
   productImage: {
     width: width * 0.2,
     height: width * 0.2,

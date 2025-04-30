@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/Providers/AuthProvider';
 import axios from 'axios';
+import { useCart } from '@/Providers/CartProvider';
 
 const ProfileField = ({
   label,
@@ -81,7 +82,6 @@ const [password, setPassword] = useState(userData?.password || '');
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const router = useRouter();
-  
   const handleSave = async () => {
     // Input validation
     if (!name || !email || !address || !contactNumber || !password) {
@@ -149,15 +149,21 @@ const [password, setPassword] = useState(userData?.password || '');
 
   const signout = () => {
     hideLogoutModal();
-    AsyncStorage.removeItem('userData')
+  
+    Promise.all([
+      AsyncStorage.removeItem('userData'),
+      AsyncStorage.removeItem('cartItems'), // 
+    ])
       .then(() => {
         setData(null);
+        
         router.replace('/Login');
       })
       .catch((error) => {
         console.error('Error logging out:', error);
       });
   };
+  
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
