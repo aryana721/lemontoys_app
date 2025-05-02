@@ -9,25 +9,44 @@ import {
 } from 'react';
 import { useAuth } from './AuthProvider';
 
-const CartContext = createContext({
-  AddToCart: (item: any) => {},
-  RemoveFromCart: (item: any) => {},
-  CartItems: [] as any[],
-  deleteFromCart: (item: any) => {},
+// Define proper types for cart context
+interface CartItem {
+  productId: string;
+  quantity: number;
+  [key: string]: any;
+}
+
+interface CartContextType {
+  AddToCart: (item: any) => Promise<void>;
+  RemoveFromCart: (item: any) => Promise<void>;
+  deleteFromCart: (item: any) => Promise<void>;
+  clearCart: () => Promise<void>;
+  CartItems: CartItem[];
+  setCartItems: (items: CartItem[]) => void;
+}
+
+// Create context with default values
+const CartContext = createContext<CartContextType>({
+  AddToCart: async () => {},
+  RemoveFromCart: async () => {},
+  deleteFromCart: async () => {},
+  clearCart: async () => {},
+  CartItems: [],
+  setCartItems: () => {},
 });
 
 export default function CartProvider({ children }: PropsWithChildren) {
-  const [CartItems, setCartItems] = useState<any[]>([]);
+  const [CartItems, setCartItems] = useState<CartItem[]>([]);
   const { data } = useAuth();
   const Data = typeof data === 'string' ? JSON.parse(data) : data;
   const userId = Data?._id;
 
-
+  // Load cart items on component mount or when userId changes
   useEffect(() => {
     const loadCart = async () => {
       try {
+        // First try to load from local storage
         const storedCartString = await AsyncStorage.getItem('cartItems');
-        // console.log('storedCartString', storedCartString);
         if (storedCartString && storedCartString !== 'null') {
           try {
             setCartItems(JSON.parse(storedCartString));
@@ -36,12 +55,12 @@ export default function CartProvider({ children }: PropsWithChildren) {
           }
         }
 
+        // If user is logged in, fetch from server
         if (!userId) return;
 
         const response = await axios.get(`${process.env.EXPO_PUBLIC_HOST}/cart?userId=${userId}`);
         if (response.data && response.data !== null) {
           setCartItems(response.data);
-          // console.log(CartItems)
           await AsyncStorage.setItem('cartItems', JSON.stringify(response.data));
         }
       } catch (error) {
@@ -52,7 +71,8 @@ export default function CartProvider({ children }: PropsWithChildren) {
     loadCart();
   }, [userId]);
 
-  const saveCartToStorage = async (items: any[]) => {
+  // Save cart to AsyncStorage
+  const saveCartToStorage = async (items: CartItem[]) => {
     try {
       await AsyncStorage.setItem('cartItems', JSON.stringify(items));
     } catch (error) {
@@ -60,6 +80,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
     }
   };
 
+  // Add item to cart
   const AddToCart = async (item: any) => {
     try {
       if (!userId) throw new Error('User ID not available');
@@ -72,11 +93,11 @@ export default function CartProvider({ children }: PropsWithChildren) {
   
       if (existingItemIndex !== -1) {
         // Update local quantity
-        updatedCartItems[existingItemIndex].quantity += item.MinimumOrderQuantity;
+        updatedCartItems[existingItemIndex].quantity += item.MinimumOrderQuantity || 1;
   
         setCartItems(updatedCartItems);
         saveCartToStorage(updatedCartItems);
-        console.log("Itemsssssssssssssssssssssssssssssss",updatedCartItems[existingItemIndex].quantity)
+        
         // Sync with backend
         await axios.post(`${process.env.EXPO_PUBLIC_HOST}/add-to-cart`, {
           userId,
@@ -91,7 +112,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
           userId,
           product: {
             ...item,
-            quantity: item.MinimumOrderQuantity,
+            quantity: item.MinimumOrderQuantity || 1,
           },
         });
   
@@ -111,8 +132,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
     }
   };
   
-  
-
+  // Remove item from cart (reduce quantity)
   const RemoveFromCart = async (item: any) => {
     try {
       if (!userId) throw new Error('User ID not available');
@@ -136,12 +156,14 @@ export default function CartProvider({ children }: PropsWithChildren) {
       await axios.post(`${process.env.EXPO_PUBLIC_HOST}/remove-from-cart`, {
         userId,
         productId: item._id,
+        quantity: quantityToRemove,
       });
     } catch (error) {
       console.error('Failed to sync cart removal with backend', error);
     }
   };
   
+  // Delete item completely from cart
   const deleteFromCart = async (item: any) => {
     try {
       if (!userId) throw new Error('User ID not available');
@@ -151,17 +173,52 @@ export default function CartProvider({ children }: PropsWithChildren) {
       setCartItems(updatedCartItems);
       saveCartToStorage(updatedCartItems);
   
-      await axios.post(`${process.env.EXPO_PUBLIC_HOST}/remove-from-cart`, {
+      await axios.post(`${process.env.EXPO_PUBLIC_HOST}/delete-from-cart`, {
         userId,
         productId: item._id,
       });
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Failed to delete from cart:', error);
     }
   };
+
+  // Clear entire cart
+  const clearCart = async () => {
+    try {
+      if (!userId) {
+        setCartItems([]);
+        await AsyncStorage.removeItem('cartItems');
+        return;
+      }
+      
+      // Clear local cart
+      setCartItems([]);
+      await AsyncStorage.removeItem('cartItems');
+      
+      // Sync with backend
+      await axios.post(`${process.env.EXPO_PUBLIC_HOST}/clear-cart`, {
+        userId,
+      });
+    } catch (error) {
+      console.error('Failed to clear cart:', error);
+      
+      // Even if backend sync fails, clear local cart
+      setCartItems([]);
+      await AsyncStorage.removeItem('cartItems');
+    }
+  };
+
   return (
-    <CartContext.Provider value={{ AddToCart, RemoveFromCart, CartItems,deleteFromCart }}>
+    <CartContext.Provider 
+      value={{ 
+        AddToCart, 
+        RemoveFromCart, 
+        CartItems, 
+        deleteFromCart, 
+        clearCart, 
+        setCartItems 
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
