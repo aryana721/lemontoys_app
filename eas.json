@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 16.3.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "NPM_FLAGS": "--legacy-peer-deps",
+        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "NPM_FLAGS": "--legacy-peer-deps",
+        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "NPM_FLAGS": "--legacy-peer-deps",
+        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
