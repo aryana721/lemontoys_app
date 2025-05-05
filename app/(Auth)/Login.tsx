@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons'; // or use Feather / Ionicons
 import { useAuth } from '@/Providers/AuthProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNetwork } from '@/Providers/NetworkProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -27,6 +28,7 @@ type data = {
 };
 
 const Login: React.FC = () => {
+    const isConnected = useNetwork();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

@@ -3,11 +3,13 @@ import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/Providers/AuthProvider';
+import { useNetwork } from '@/Providers/NetworkProvider';
 
 const Home = () => {
   const router = useRouter();
   const { data } = useAuth();
-
+    const isConnected = useNetwork();
+  
   const handleMoveToShop = async () => {
     router.replace('/Search')
   };

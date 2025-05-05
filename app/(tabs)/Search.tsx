@@ -8,8 +8,8 @@ import { useAuth } from '@/Providers/AuthProvider';
 import axios from 'axios';
 import { useCart } from '@/Providers/CartProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import { useNetwork } from '@/Providers/NetworkProvider';
 
 const { width } = Dimensions.get('window');
 const categoryPriceMap = {
@@ -33,9 +33,11 @@ export default function TabTwoScreen() {
   const [categories, setCategories] = useState([]);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const router = useRouter();
+  const isConnected = useNetwork();
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!isConnected) return;
       try {
         setLoading(true);
         setError(null);
@@ -68,7 +70,7 @@ export default function TabTwoScreen() {
     };
 
     fetchProducts();
-  }, []);
+  }, [isConnected]); // re-run when network state changes
 
   useEffect(() => {
     const filterProducts = () => {
@@ -96,25 +98,17 @@ export default function TabTwoScreen() {
   }, [searchQuery, minPrice, maxPrice, selectedCategories, products]);
 
   const renderItem = ({ item }: any) => {
-    // console.log("CartItems",CartItems)
-    // console.log("------------------------------------------------")
     const cartItem = Array.isArray(CartItems)
       ? CartItems.find((cartItem) => cartItem.productId === item._id)
       : undefined;
     const quantity = cartItem?.quantity || 0;
 
     const userCategory = typeof data === 'string' ? JSON.parse(data).category as keyof typeof categoryPriceMap : undefined;
-    // console.log("a",userCategory)
     const priceKey = userCategory ? categoryPriceMap[userCategory] : '';
-    // console.log("b",priceKey)
-    // console.log("c",item[priceKey] + item.price)
-    let dynamicPrice =  item[priceKey] + item.price
-    if(isNaN(dynamicPrice) || dynamicPrice === undefined || dynamicPrice === null){
-      dynamicPrice = item.price
-    } 
-    // console.log("d",dynamicPrice)
-    // console.log("e",item)
-    // const price = dynamicPrice;
+    let dynamicPrice = item[priceKey] + item.price;
+    if (isNaN(dynamicPrice) || dynamicPrice === undefined || dynamicPrice === null) {
+      dynamicPrice = item.price;
+    }
 
     return (
       <TouchableOpacity onPress={() => router.push({
@@ -123,8 +117,7 @@ export default function TabTwoScreen() {
           item: JSON.stringify(item),
           userCategory,
         },
-      })
-      }>
+      })}>
         <SafeAreaView style={styles.card}>
           <Image source={item.image} style={styles.productImage} />
           <View style={styles.infoContainer}>
@@ -159,6 +152,14 @@ export default function TabTwoScreen() {
     );
   };
 
+  if (!isConnected) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <Text style={styles.noInternetText}>No Internet Connection</Text>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#084C61" /></View>;
   }
@@ -170,17 +171,16 @@ export default function TabTwoScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-
       <View style={styles.topSection}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 , gap: 10}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 }}>
           <Image
-                        source={require('../../assets/images/user2.gif')}
-                        style={styles.avatar}
-                        defaultSource={require('../../assets/images/avatar-placeholder.jpg')}
-                      />
-        <Text style={styles.greeting}>
+            source={require('../../assets/images/user2.gif')}
+            style={styles.avatar}
+            defaultSource={require('../../assets/images/avatar-placeholder.jpg')}
+          />
+          <Text style={styles.greeting}>
             Hello! <Text style={{ fontWeight: 'bold' }}>{typeof data === 'string' ? JSON.parse(data).name : 'Guest'}</Text>
-        </Text>
+          </Text>
         </View>
 
         <View style={styles.searchContainer}>
@@ -263,8 +263,6 @@ export default function TabTwoScreen() {
 
 const CARD_WIDTH = width / 2 - 24;
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -286,6 +284,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 16,
+  },
+  noInternetText: {
+    fontSize: 18,
+    color: '#555',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   topSection: {
     paddingHorizontal: 16,
@@ -342,6 +346,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   priceFilter: {
     flexDirection: 'row',
@@ -360,10 +366,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#084C61',
     padding: 10,
     borderRadius: 8,
+    marginTop: 10,
   },
   applyButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   listContent: {
     paddingHorizontal: 10,
@@ -383,8 +391,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 150, 
-    
+    height: 150,
   },
   infoContainer: {
     padding: 10,

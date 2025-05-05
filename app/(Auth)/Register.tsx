@@ -15,6 +15,7 @@
       import { Link, useRouter } from 'expo-router';
       import axios from 'axios';
       import { FontAwesome } from '@expo/vector-icons'; // or use Feather / Ionicons
+import { useNetwork } from '@/Providers/NetworkProvider';
 
       const { width } = Dimensions.get('window');
 
@@ -27,7 +28,8 @@
         const [password, setPassword] = useState<string>('');
         const [loading, setLoading] = useState<boolean>(false);
           const [isSecure, setIsSecure] = useState(true);
-        
+            const isConnected = useNetwork();
+          
         const router = useRouter();
         
         const registerUser = () => {

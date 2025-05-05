@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useCart } from '@/Providers/CartProvider';
 import { useLocalSearchParams } from 'expo-router';
+import { useNetwork } from '@/Providers/NetworkProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +20,8 @@ export default function ProductDetailScreen() {
   const navigation = useNavigation();
   const { item, userCategory } = useLocalSearchParams();
   const { AddToCart, CartItems, RemoveFromCart } = useCart();
-
+    const isConnected = useNetwork();
+  
   const category = userCategory;
   const ITEM = typeof item === 'string' ? JSON.parse(item) : item;
   const categoryPrice = ITEM[`price${category}`] || 0;

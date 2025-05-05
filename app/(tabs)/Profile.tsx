@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/Providers/AuthProvider';
 import axios from 'axios';
 import { useCart } from '@/Providers/CartProvider';
+import { useNetwork } from '@/Providers/NetworkProvider';
 
 const ProfileField = ({
   label,
@@ -69,6 +70,8 @@ const ProfileField = ({
 
 const Profile = () => {
   const { data,setData } = useAuth();
+     const isConnected = useNetwork();
+      
 
 const userData = typeof data === 'string' ? JSON.parse(data) : data;
 

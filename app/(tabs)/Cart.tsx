@@ -19,6 +19,7 @@ import axios from 'axios';
 import { useAuth } from '@/Providers/AuthProvider';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native';
+import { useNetwork } from '@/Providers/NetworkProvider';
 
 // Define proper interfaces
 interface CartItem {
@@ -56,7 +57,8 @@ const CATEGORY_PRICE_MAP = {
 export default function Cart() {
   // Navigation
   const navigation = useNavigation();
-  
+      const isConnected = useNetwork();
+    
   // Use window dimensions for responsive design
   const { width, height } = useWindowDimensions();
   
