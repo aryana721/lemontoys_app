@@ -9,21 +9,21 @@
       "distribution": "internal",
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps",
-        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+        "EXPO_PUBLIC_HOST": "http://44.222.24.96:3001"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps",
-        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+        "EXPO_PUBLIC_HOST": "http://44.222.24.96:3001"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps",
-        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+        "EXPO_PUBLIC_HOST": "http://44.222.24.96:3001"
       }
     }
   },
@@ -31,3 +31,6 @@
     "production": {}
   }
 }
+
+
+

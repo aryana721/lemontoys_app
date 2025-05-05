@@ -108,10 +108,13 @@ export default function TabTwoScreen() {
     const priceKey = userCategory ? categoryPriceMap[userCategory] : '';
     // console.log("b",priceKey)
     // console.log("c",item[priceKey] + item.price)
-    const dynamicPrice =  item[priceKey] + item.price 
+    let dynamicPrice =  item[priceKey] + item.price
+    if(isNaN(dynamicPrice) || dynamicPrice === undefined || dynamicPrice === null){
+      dynamicPrice = item.price
+    } 
     // console.log("d",dynamicPrice)
     // console.log("e",item)
-    const price = dynamicPrice;
+    // const price = dynamicPrice;
 
     return (
       <TouchableOpacity onPress={() => router.push({
@@ -169,9 +172,16 @@ export default function TabTwoScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
       <View style={styles.topSection}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 , gap: 10}}>
+          <Image
+                        source={require('../../assets/images/user2.gif')}
+                        style={styles.avatar}
+                        defaultSource={require('../../assets/images/avatar-placeholder.jpg')}
+                      />
         <Text style={styles.greeting}>
-          Hello! <Text style={{ fontWeight: 'bold' }}>{typeof data === 'string' ? JSON.parse(data).name : 'Guest'}</Text>
+            Hello! <Text style={{ fontWeight: 'bold' }}>{typeof data === 'string' ? JSON.parse(data).name : 'Guest'}</Text>
         </Text>
+        </View>
 
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
@@ -260,6 +270,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 40,
+    backgroundColor: '#e9ecef',
   },
   center: {
     flex: 1,

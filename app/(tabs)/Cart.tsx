@@ -350,7 +350,7 @@ export default function Cart() {
       <Text style={styles.summaryTitle}>Order Summary</Text>
       
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Items ({detailedCartItems.reduce((total, item) => total + item.quantity, 0)})</Text>
+        <Text style={styles.summaryLabel}>Items ({detailedCartItems.length})</Text>
         <Text style={styles.summaryValue}>{formatCurrency(calculateSubtotal())}</Text>
       </View>
       

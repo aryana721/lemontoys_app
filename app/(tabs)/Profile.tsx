@@ -206,7 +206,8 @@ const [password, setPassword] = useState(userData?.password || '');
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
-                isEditing={isEditing}
+                isEditing={false}
+
               />
               <ProfileField
                 label="Address"
