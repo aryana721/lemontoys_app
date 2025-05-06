@@ -2,14 +2,14 @@
   "expo": {
     "name": "Lemontoy",
     "slug": "LEMONTOY",
-    "version": "1.1.0",
+    "version": "1.8.0",
     "orientation": "portrait",
-    "icon": "./assets/images/small_logo.png",
+    "icon": "./assets/images/app_icon_logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/small_logo.png",
+      "image": "./assets/images/splash_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -22,9 +22,10 @@
     },
     "android": {
       "package": "com.alphatechassist.lemontoy",
-      "versionCode": 1,
+      "usesCleartextTraffic": true,
+      "versionCode": 6,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/small_logo.png",
+        "foregroundImage": "./assets/images/app_icon_logo.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": []
@@ -32,7 +33,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/small_logo.png"
+      "favicon": "./assets/images/app_icon_logo.png"
     },
     "plugins": [
       "expo-router"

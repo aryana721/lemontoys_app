@@ -41,7 +41,7 @@ export default function TabTwoScreen() {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`${process.env.EXPO_PUBLIC_HOST}/products`);
+        const response = await axios.get(`http://44.222.24.96:3001/products`);
         const mappedProducts = response.data.data.map((product: any) => ({
           _id: product._id,
           name: product.ProductName,
@@ -58,7 +58,7 @@ export default function TabTwoScreen() {
           ProductDescription: product.ProductDescription,
           qrCodeUrl: product.qrCodeUrl,
         }));
-        const category = await axios.get(`${process.env.EXPO_PUBLIC_HOST}/category`);
+        const category = await axios.get(`http://44.222.24.96:3001/category`);
         setCategories(category.data.data);
         setProducts(mappedProducts);
         setFilteredProducts(mappedProducts);

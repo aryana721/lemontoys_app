@@ -50,7 +50,7 @@ const Login: React.FC = () => {
       return;
     }
 
-    const url = `${process.env.EXPO_PUBLIC_HOST}/login`;
+    const url = `http://44.222.24.96:3001/login`;
     const Data: data = {
       identifier,
       password

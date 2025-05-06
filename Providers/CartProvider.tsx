@@ -58,7 +58,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
         // If user is logged in, fetch from server
         if (!userId) return;
 
-        const response = await axios.get(`${process.env.EXPO_PUBLIC_HOST}/cart?userId=${userId}`);
+        const response = await axios.get(`http://44.222.24.96:3001/cart?userId=${userId}`);
         if (response.data && response.data !== null) {
           setCartItems(response.data);
           await AsyncStorage.setItem('cartItems', JSON.stringify(response.data));
@@ -99,7 +99,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
         saveCartToStorage(updatedCartItems);
         
         // Sync with backend
-        await axios.post(`${process.env.EXPO_PUBLIC_HOST}/add-to-cart`, {
+        await axios.post(`http://44.222.24.96:3001/add-to-cart`, {
           userId,
           product: {
             ...item,
@@ -108,7 +108,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
         });
       } else {
         // Create in backend
-        const response = await axios.post(`${process.env.EXPO_PUBLIC_HOST}/add-to-cart`, {
+        const response = await axios.post(`http://44.222.24.96:3001/add-to-cart`, {
           userId,
           product: {
             ...item,
@@ -153,7 +153,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
       setCartItems(updatedCartItems);
       saveCartToStorage(updatedCartItems);
   
-      await axios.post(`${process.env.EXPO_PUBLIC_HOST}/remove-from-cart`, {
+      await axios.post(`http://44.222.24.96:3001/remove-from-cart`, {
         userId,
         productId: item._id,
         quantity: quantityToRemove,
@@ -173,7 +173,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
       setCartItems(updatedCartItems);
       saveCartToStorage(updatedCartItems);
   
-      await axios.post(`${process.env.EXPO_PUBLIC_HOST}/delete-from-cart`, {
+      await axios.post(`http://44.222.24.96:3001/delete-from-cart`, {
         userId,
         productId: item._id,
       });
@@ -196,7 +196,7 @@ export default function CartProvider({ children }: PropsWithChildren) {
       await AsyncStorage.removeItem('cartItems');
       
       // Sync with backend
-      await axios.post(`${process.env.EXPO_PUBLIC_HOST}/clear-cart`, {
+      await axios.post(`http://44.222.24.96:3001/clear-cart`, {
         userId,
       });
     } catch (error) {

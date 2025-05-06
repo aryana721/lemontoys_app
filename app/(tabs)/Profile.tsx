@@ -107,7 +107,7 @@ const [password, setPassword] = useState(userData?.password || '');
       return;
     }
 
-    const url = `${process.env.EXPO_PUBLIC_HOST}/updateUser/${userData?._id}`;
+    const url = `http://44.222.24.96:3001/updateUser/${userData?._id}`;
     const updatedData = {
       name,
       email,

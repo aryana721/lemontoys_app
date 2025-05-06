@@ -131,7 +131,7 @@ export default function Cart() {
       setIsLoading(true);
       
       const response = await axios.post<OrderResponse>(
-        `${process.env.EXPO_PUBLIC_HOST}/order`, 
+        `http://44.222.24.96:3001/order`, 
         { orderDetails }
       );
       
@@ -201,7 +201,7 @@ export default function Cart() {
       try {
         setIsLoading(true);
         const productIds = CartItems.map(item => item.productId);
-        const response = await axios.post(`${process.env.EXPO_PUBLIC_HOST}/details`, {
+        const response = await axios.post(`http://44.222.24.96:3001/details`, {
           itemIds: productIds,
         });
 
