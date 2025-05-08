@@ -107,7 +107,7 @@ const [password, setPassword] = useState(userData?.password || '');
       return;
     }
 
-    const url = `http://44.222.24.96:3001/updateUser/${userData?._id}`;
+    const url = `https://lemontoys-server.onrender.com/updateUser/${userData?._id}`;
     const updatedData = {
       name,
       email,
@@ -171,9 +171,16 @@ const [password, setPassword] = useState(userData?.password || '');
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
-
+  
+ 
+  
   return (
     <SafeAreaView style={styles.container}>
+      {!isConnected ? (
+      <View style={styles.noInternetContainer}>
+        <Text style={styles.noInternetText}>No Internet Connection</Text>
+      </View>
+    ):(
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -235,7 +242,7 @@ const [password, setPassword] = useState(userData?.password || '');
               />
             </View>
 
-            {isEditing && (
+            {isConnected && isEditing && (
               <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -251,7 +258,7 @@ const [password, setPassword] = useState(userData?.password || '');
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingView>)}
 
       <Modal
         animationType="fade"
@@ -289,6 +296,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  noInternetContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  noInternetText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#dc3545',
+  },
+  
   keyboardAvoidingView: {
     flex: 1,
   },

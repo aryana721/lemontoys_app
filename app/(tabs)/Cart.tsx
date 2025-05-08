@@ -1,10 +1,10 @@
-import { 
-  View, 
-  Text, 
-  Image, 
-  FlatList, 
-  TouchableOpacity, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
   ActivityIndicator,
   Platform,
   useWindowDimensions,
@@ -57,31 +57,29 @@ const CATEGORY_PRICE_MAP = {
 export default function Cart() {
   // Navigation
   const navigation = useNavigation();
-      const isConnected = useNetwork();
-    
+  const isConnected = useNetwork();
+
   // Use window dimensions for responsive design
   const { width, height } = useWindowDimensions();
-  
+
   // State management
   const [isLoading, setIsLoading] = useState(false);
   const [detailedCartItems, setDetailedCartItems] = useState<CartItem[]>([]);
-  
+
   // Animation reference
   const successAnimation = useRef<LottieView>(null);
-  
+
   // Providers
   const { data } = useAuth();
   const { CartItems, AddToCart, RemoveFromCart, deleteFromCart, clearCart } = useCart();
-  
+
   // Parse user data safely
   const userData = typeof data === 'string' ? JSON.parse(data) : null;
   const userCategory = userData?.category as keyof typeof CATEGORY_PRICE_MAP;
   const userId = userData?._id;
-  
+
   // Get the appropriate price key based on user category
   const priceKey = userCategory ? CATEGORY_PRICE_MAP[userCategory] : '';
-
-  // No BackHandler setup - we'll rely on the Alert's native behavior
 
   // Calculate subtotal with memoization
   const calculateSubtotal = useCallback(() => {
@@ -131,7 +129,7 @@ export default function Cart() {
       setIsLoading(true);
       
       const response = await axios.post<OrderResponse>(
-        `http://44.222.24.96:3001/order`, 
+        `https://lemontoys-server.onrender.com/order`, 
         { orderDetails }
       );
       
@@ -201,7 +199,7 @@ export default function Cart() {
       try {
         setIsLoading(true);
         const productIds = CartItems.map(item => item.productId);
-        const response = await axios.post(`http://44.222.24.96:3001/details`, {
+        const response = await axios.post(`https://lemontoys-server.onrender.com/details`, {
           itemIds: productIds,
         });
 
@@ -221,8 +219,10 @@ export default function Cart() {
       }
     };
 
-    fetchCartDetails();
-  }, [CartItems]);
+    if (isConnected) {
+      fetchCartDetails();
+    }
+  }, [CartItems, isConnected]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -237,7 +237,7 @@ export default function Cart() {
   const renderItem = ({ item }: { item: CartItem }) => {
     const itemPrice = (item[priceKey] || 0) + (item.Price || 0);
     const itemTotal = itemPrice * item.quantity;
-    
+
     return (
       <View style={[styles.cartItem, { width: width > 500 ? width * 0.8 : width - 32 }]}>
         <Image
@@ -296,32 +296,11 @@ export default function Cart() {
     );
   };
 
-  // Empty cart state
-  if (CartItems.length === 0) {
-    return (
-      <SafeAreaView style={styles.emptyCartContainer}>
-        <LottieView
-          source={require('../../assets/animation/empty-cart.json')}
-          autoPlay
-          loop
-          style={styles.emptyCartAnimation}
-        />
-        <Text style={styles.emptyCartText}>Your Cart is Empty!</Text>
-        <TouchableOpacity 
-          style={styles.continueShoppingButton}
-          onPress={navigateToProducts}
-        >
-          <Text style={styles.continueShoppingText}>Continue Shopping</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
   // Header with clear all button
   const CartHeader = () => (
     <View style={[styles.cartHeader, { width: width > 500 ? width * 0.8 : width - 32 }]}>
       <Text style={styles.cartTitle}>Shopping Cart ({CartItems.length})</Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => {
           if (Platform.OS === 'web') {
             if (window.confirm('Are you sure you want to clear your cart?')) {
@@ -350,7 +329,7 @@ export default function Cart() {
   const OrderSummary = () => (
     <View style={[styles.summary, { width: width > 500 ? width * 0.8 : width - 32 }]}>
       <Text style={styles.summaryTitle}>Order Summary</Text>
-      
+
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Items ({detailedCartItems.length})</Text>
         <Text style={styles.summaryValue}>{formatCurrency(calculateSubtotal())}</Text>
@@ -380,6 +359,48 @@ export default function Cart() {
     </View>
   );
 
+  // Empty cart view
+  const EmptyCartView = () => (
+    <SafeAreaView style={styles.emptyCartContainer}>
+      <LottieView
+        source={require('../../assets/animation/empty-cart.json')}
+        autoPlay
+        loop
+        style={styles.emptyCartAnimation}
+      />
+      <Text style={styles.emptyCartText}>Your Cart is Empty!</Text>
+      <TouchableOpacity 
+        style={styles.continueShoppingButton}
+        onPress={navigateToProducts}
+      >
+        <Text style={styles.continueShoppingText}>Continue Shopping</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+
+  // No internet connection view
+  const NoConnectionView = () => (
+    <SafeAreaView style={styles.emptyCartContainer}>
+      <LottieView
+        source={require('../../assets/animation/no-connection.json')} // Assuming you have this animation
+        autoPlay
+        loop
+        style={styles.emptyCartAnimation}
+      />
+      <Text style={styles.noConnectionText}>No Internet Connection</Text>
+      <Text style={styles.noConnectionSubtext}>Please check your connection and try again</Text>
+    </SafeAreaView>
+  );
+
+  // Conditional rendering based on connection state and cart data
+  if (!isConnected) {
+    return <NoConnectionView />;
+  }
+
+  if (CartItems.length === 0) {
+    return <EmptyCartView />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {isLoading && (
@@ -387,7 +408,7 @@ export default function Cart() {
           <ActivityIndicator size="large" color="#0ea5e9" />
         </View>
       )}
-      
+
       <FlatList
         data={detailedCartItems}
         keyExtractor={(item) => item._id.toString()}
@@ -400,8 +421,6 @@ export default function Cart() {
         ListFooterComponent={<OrderSummary />}
       />
 
-      {/* No AwesomeAlert component - using React Native's built-in Alert instead */}
-      
       {/* Hidden success animation to pre-load */}
       <View style={{ width: 0, height: 0, overflow: 'hidden' }}>
         <LottieView
@@ -629,6 +648,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 24,
     color: '#6b7280',
+  },
+  noConnectionText: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 20,
+    color: '#ef4444',
+  },
+  noConnectionSubtext: {
+    fontSize: 16,
+    marginTop: 8,
+    marginBottom: 24,
+    color: '#6b7280',
+    textAlign: 'center',
   },
   continueShoppingButton: {
     backgroundColor: '#0ea5e9',

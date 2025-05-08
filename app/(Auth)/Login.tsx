@@ -50,7 +50,7 @@ const Login: React.FC = () => {
       return;
     }
 
-    const url = `http://44.222.24.96:3001/login`;
+    const url = `https://lemontoys-server.onrender.com/login`;
     const Data: data = {
       identifier,
       password

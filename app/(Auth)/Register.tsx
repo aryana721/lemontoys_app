@@ -34,7 +34,7 @@ import { useNetwork } from '@/Providers/NetworkProvider';
         
         const registerUser = () => {
           // Registration logic goes here
-          let url = `http://44.222.24.96:3001/register`;
+          let url = `https://lemontoys-server.onrender.com/register`;
           setLoading(true);
           if (!agree) {
             alert('Please agree to the terms and conditions');
