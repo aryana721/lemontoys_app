@@ -19,8 +19,9 @@ import { useAuth } from '@/Providers/AuthProvider';
 import axios from 'axios';
 import { useCart } from '@/Providers/CartProvider';
 import { useNetwork } from '@/Providers/NetworkProvider';
+import { useTheme } from '@/Providers/ThemeProvider';
 
-const ProfileField = ({
+export const ProfileField = ({
   label,
   value,
   onChangeText,
@@ -28,30 +29,32 @@ const ProfileField = ({
   isEditing,
   passwordVisible,
   togglePasswordVisibility,
+  theme,
 }: any) => (
   <View style={styles.fieldContainer}>
-    <Text style={styles.fieldLabel}>{label}</Text>
+    <Text style={[styles.fieldLabel, { color: theme.text }]}>{label}</Text>
     {isEditing ? (
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { borderBottomColor: theme.primary }]}>
         <TextInput
-          style={[styles.input, secure && styles.passwordInput]}
+          style={[styles.input, secure && styles.passwordInput, { color: theme.text }]}
           value={value}
           onChangeText={onChangeText}
-          secureTextEntry={secure && !passwordVisible}
+          secureTextEntry={secure && !passwordVisible}  
+          placeholderTextColor={theme.secondary}
         />
         {secure && (
           <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
             <MaterialIcons
               name={passwordVisible ? "visibility-off" : "visibility"}
               size={22}
-              color="#666"
+              color={theme.secondary}
             />
           </TouchableOpacity>
         )}
       </View>
     ) : (
-      <View style={styles.fieldValueContainer}>
-        <Text style={styles.fieldValue}>
+      <View style={[styles.fieldValueContainer, { borderBottomColor: theme.border }]}>
+        <Text style={[styles.fieldValue, { color: theme.text }]}>
           {secure ? (passwordVisible ? value : '•••••') : value}
         </Text>
         {secure && (
@@ -59,7 +62,7 @@ const ProfileField = ({
             <MaterialIcons
               name={passwordVisible ? "visibility-off" : "visibility"}
               size={22}
-              color="#666"
+              color={theme.secondary}
             />
           </TouchableOpacity>
         )}
@@ -69,22 +72,22 @@ const ProfileField = ({
 );
 
 const Profile = () => {
-  const { data,setData } = useAuth();
-     const isConnected = useNetwork();
-      
+  const { data, setData } = useAuth();
+  const isConnected = useNetwork();
+  const theme = useTheme(); // Using the theme from your ThemeProvider
 
-const userData = typeof data === 'string' ? JSON.parse(data) : data;
+  const userData = typeof data === 'string' ? JSON.parse(data) : data;
 
-
-const [name, setName] = useState(userData?.name || 'Guest User');
-const [email, setEmail] = useState(userData?.email?.toString() || '');
-const [address, setAddress] = useState(userData?.address || '');
-const [contactNumber, setContactNumber] = useState(userData?.phone?.toString() || '');
-const [password, setPassword] = useState(userData?.password || '');
+  const [name, setName] = useState(userData?.name || 'Guest User');
+  const [email, setEmail] = useState(userData?.email?.toString() || '');
+  const [address, setAddress] = useState(userData?.address || '');
+  const [contactNumber, setContactNumber] = useState(userData?.phone?.toString() || '');
+  const [password, setPassword] = useState(userData?.password || '');
   const [isEditing, setIsEditing] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const router = useRouter();
+  
   const handleSave = async () => {
     // Input validation
     if (!name || !email || !address || !contactNumber || !password) {
@@ -107,7 +110,7 @@ const [password, setPassword] = useState(userData?.password || '');
       return;
     }
 
-    const url = `https://lemontoys-server.onrender.com/updateUser/${userData?._id}`;
+    const url = `https://lemontoys-server.vercel.app/updateUser/${userData?._id}`;
     const updatedData = {
       name,
       email,
@@ -119,16 +122,8 @@ const [password, setPassword] = useState(userData?.password || '');
     try {
       const response = await axios.post(url, updatedData);
       const updatedUser = response.data.data;
-
-      // Update context
-      // setData(updatedUser.data);
-
-      // Store in AsyncStorage
-    
       
       await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
-
-     
       alert('Profile updated successfully.');
       setIsEditing(false);
     } catch (error) {
@@ -136,7 +131,6 @@ const [password, setPassword] = useState(userData?.password || '');
       alert('Failed to update profile. Please try again later.');
     }
   };
-
 
   const handleCancel = () => {
     setIsEditing(false);
@@ -155,11 +149,10 @@ const [password, setPassword] = useState(userData?.password || '');
   
     Promise.all([
       AsyncStorage.removeItem('userData'),
-      AsyncStorage.removeItem('cartItems'), // 
+      AsyncStorage.removeItem('cartItems'), 
     ])
       .then(() => {
         setData(null);
-        
         router.replace('/Login');
       })
       .catch((error) => {
@@ -167,18 +160,15 @@ const [password, setPassword] = useState(userData?.password || '');
       });
   };
   
-
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
   
- 
-  
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {!isConnected ? (
-      <View style={styles.noInternetContainer}>
-        <Text style={styles.noInternetText}>No Internet Connection</Text>
+      <View style={[styles.noInternetContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.noInternetText, { color: theme.error }]}>No Internet Connection</Text>
       </View>
     ):(
       <KeyboardAvoidingView
@@ -186,23 +176,23 @@ const [password, setPassword] = useState(userData?.password || '');
         style={styles.keyboardAvoidingView}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.profileContainer}>
+          <View style={[styles.profileContainer, { backgroundColor: theme.card, shadowColor: theme.text }]}>
             <View style={styles.avatarContainer}>
               <Image
                 source={require('../../assets/images/user2.gif')}
                 style={styles.avatar}
                 defaultSource={require('../../assets/images/avatar-placeholder.jpg')}
               />
-              <Text style={styles.userName}>{name}</Text>
-              <Text style={styles.userEmail}>{email}</Text>
+              <Text style={[styles.userName, { color: theme.text }]}>{name}</Text>
+              <Text style={[styles.userEmail, { color: theme.secondary }]}>{email}</Text>
             </View>
 
             <TouchableOpacity
-              style={styles.editProfileButton}
+              style={[styles.editProfileButton, { backgroundColor: theme.secondary }]}
               onPress={() => setIsEditing(!isEditing)}
             >
-              <MaterialIcons name="edit" size={18} color="#333" />
-              <Text style={styles.editProfileText}>Edit Profile</Text>
+              <MaterialIcons name="edit" size={18} color={theme.text} />
+              <Text style={[styles.editProfileText, { color: theme.text }]}>Edit Profile</Text>
             </TouchableOpacity>
 
             <View style={styles.formContainer}>
@@ -211,25 +201,28 @@ const [password, setPassword] = useState(userData?.password || '');
                 value={name}
                 onChangeText={setName}
                 isEditing={isEditing}
+                theme={theme}
               />
               <ProfileField
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
                 isEditing={false}
-
+                theme={theme}
               />
               <ProfileField
                 label="Address"
                 value={address}
                 onChangeText={setAddress}
                 isEditing={isEditing}
+                theme={theme}
               />
               <ProfileField
                 label="Contact Number"
                 value={contactNumber}
                 onChangeText={setContactNumber}
                 isEditing={isEditing}
+                theme={theme}
               />
               <ProfileField
                 label="Password"
@@ -239,22 +232,29 @@ const [password, setPassword] = useState(userData?.password || '');
                 isEditing={isEditing}
                 passwordVisible={passwordVisible}
                 togglePasswordVisibility={togglePasswordVisibility}
+                theme={theme}
               />
             </View>
 
             {isConnected && isEditing && (
               <View style={styles.actionButtons}>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                <TouchableOpacity 
+                  style={[styles.cancelButton, { backgroundColor: theme.secondary }]} 
+                  onPress={handleCancel}
+                >
+                  <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <TouchableOpacity 
+                  style={[styles.saveButton, { backgroundColor: theme.primary }]} 
+                  onPress={handleSave}
+                >
                   <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
               </View>
             )}
 
             <TouchableOpacity style={styles.signOutButton} onPress={showLogoutModal}>
-              <Text style={styles.signOutText}>Sign Out</Text>
+              <Text style={[styles.signOutText, { color: theme.error }]}>Sign Out</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -267,18 +267,18 @@ const [password, setPassword] = useState(userData?.password || '');
         onRequestClose={hideLogoutModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Logout</Text>
-            <Text style={styles.modalMessage}>Are you sure you want to logout?</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Confirm Logout</Text>
+            <Text style={[styles.modalMessage, { color: theme.secondary }]}>Are you sure you want to logout?</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalCancelButton]}
+                style={[styles.modalButton, styles.modalCancelButton, { backgroundColor: theme.secondary }]}
                 onPress={hideLogoutModal}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: theme.text }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalLogoutButton]}
+                style={[styles.modalButton, styles.modalLogoutButton, { backgroundColor: theme.error }]}
                 onPress={signout}
               >
                 <Text style={styles.modalLogoutText}>Logout</Text>
@@ -294,20 +294,16 @@ const [password, setPassword] = useState(userData?.password || '');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
   },
   noInternetContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   noInternetText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#dc3545',
   },
-  
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -320,15 +316,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    color: '#0096c7',
     fontWeight: '500',
   },
   profileContainer: {
-    backgroundColor: 'white',
     borderRadius: 15,
     margin: 10,
     padding: 20,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -342,17 +335,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#e9ecef',
   },
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 10,
-    color: '#333',
   },
   userEmail: {
     fontSize: 14,
-    color: '#666',
     marginTop: 2,
   },
   editProfileButton: {
@@ -360,14 +350,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 12,
-    backgroundColor: '#f1f3f5',
     borderRadius: 8,
     marginBottom: 20,
   },
   editProfileText: {
     marginLeft: 5,
     fontWeight: '500',
-    color: '#333',
   },
   formContainer: {
     marginBottom: 20,
@@ -377,7 +365,6 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 12,
-    color: '#666',
     marginBottom: 5,
   },
   fieldValueContainer: {
@@ -385,11 +372,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
   fieldValue: {
     fontSize: 16,
-    color: '#333',
     paddingVertical: 10,
     flex: 1,
   },
@@ -398,13 +383,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#0096c7',
   },
   input: {
     fontSize: 16,
     paddingVertical: 10,
     flex: 1,
-    color: '#333',
   },
   passwordInput: {
     paddingRight: 40, // Make room for the eye icon
@@ -421,7 +404,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     borderRadius: 8,
-    backgroundColor: '#f1f3f5',
     alignItems: 'center',
     marginRight: 10,
   },
@@ -429,12 +411,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     borderRadius: 8,
-    backgroundColor: '#0096c7',
     alignItems: 'center',
     marginLeft: 10,
   },
   cancelButtonText: {
-    color: '#333',
     fontWeight: '500',
   },
   saveButtonText: {
@@ -446,16 +426,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutText: {
-    color: '#dc3545',
     fontWeight: '500',
     fontSize: 16,
   },
   bottomTabBar: {
     flexDirection: 'row',
-    backgroundColor: 'white',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
   },
   tabItem: {
     flex: 1,
@@ -465,7 +442,6 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderTopWidth: 2,
-    borderTopColor: '#0096c7',
   },
   // Modal styles
   modalOverlay: {
@@ -476,7 +452,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '80%',
-    backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
     alignItems: 'center',
@@ -493,13 +468,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333',
   },
   modalMessage: {
     fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
-    color: '#666',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -514,13 +487,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   modalCancelButton: {
-    backgroundColor: '#f1f3f5',
   },
   modalLogoutButton: {
-    backgroundColor: '#dc3545',
   },
   modalCancelText: {
-    color: '#333',
     fontWeight: '500',
   },
   modalLogoutText: {
@@ -530,10 +500,3 @@ const styles = StyleSheet.create({
 });
 
 export default Profile;
-
-
-
-
-<>
-
-</>

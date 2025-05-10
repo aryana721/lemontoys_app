@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet,
-  ActivityIndicator, StatusBar, Platform, Dimensions, Modal
+  ActivityIndicator, StatusBar, Platform, Dimensions, Modal, RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/Providers/AuthProvider';
@@ -10,6 +10,7 @@ import { useCart } from '@/Providers/CartProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useNetwork } from '@/Providers/NetworkProvider';
+import { useTheme } from '@/Providers/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 const categoryPriceMap = {
@@ -25,6 +26,7 @@ export default function TabTwoScreen() {
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState<number | null>(null);
@@ -34,43 +36,51 @@ export default function TabTwoScreen() {
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const router = useRouter();
   const isConnected = useNetwork();
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
+  const fetchProducts = async () => {
+    if (!isConnected) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get(`https://lemontoys-server.vercel.app/products`);
+      const mappedProducts = response.data.data.map((product: any) => ({
+        _id: product._id,
+        name: product.ProductName,
+        price: product.Price,
+        image: { uri: product.ProductImageURL },
+        MinimumOrderQuantity: product.MinimumOrderQuantity,
+        priceA: product.PriceA,
+        priceB: product.PriceB,
+        priceC: product.PriceC,
+        priceD: product.PriceD,
+        Category: product.Category,
+        PriceType: product.PriceType,
+        ProductOwner: product.ProductOwner,
+        ProductDescription: product.ProductDescription,
+        qrCodeUrl: product.qrCodeUrl,
+      }));
+      const category = await axios.get(`https://lemontoys-server.vercel.app/category`);
+      setCategories(category.data.data);
+      setProducts(mappedProducts);
+      setFilteredProducts(mappedProducts);
+    } catch (err) {
+      setError('Failed to load products. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (!isConnected) return;
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await axios.get(`https://lemontoys-server.onrender.com/products`);
-        const mappedProducts = response.data.data.map((product: any) => ({
-          _id: product._id,
-          name: product.ProductName,
-          price: product.Price,
-          image: { uri: product.ProductImageURL },
-          MinimumOrderQuantity: product.MinimumOrderQuantity,
-          priceA: product.PriceA,
-          priceB: product.PriceB,
-          priceC: product.PriceC,
-          priceD: product.PriceD,
-          Category: product.Category,
-          PriceType: product.PriceType,
-          ProductOwner: product.ProductOwner,
-          ProductDescription: product.ProductDescription,
-          qrCodeUrl: product.qrCodeUrl,
-        }));
-        const category = await axios.get(`https://lemontoys-server.onrender.com/category`);
-        setCategories(category.data.data);
-        setProducts(mappedProducts);
-        setFilteredProducts(mappedProducts);
-      } catch (err) {
-        setError('Failed to load products. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
   }, [isConnected]); // re-run when network state changes
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const filterProducts = () => {
@@ -132,11 +142,11 @@ export default function TabTwoScreen() {
             ) : (
               <View style={styles.counterContainer}>
                 <TouchableOpacity onPress={() => RemoveFromCart(item)}>
-                  <Ionicons name="remove-circle-outline" size={28} color="#084C61" />
+                  <Ionicons name="remove-circle-outline" size={28} color={theme.primary} />
                 </TouchableOpacity>
                 <Text style={styles.counterText}>{quantity}</Text>
                 <TouchableOpacity onPress={() => AddToCart(item)}>
-                  <Ionicons name="add-circle-outline" size={28} color="#084C61" />
+                  <Ionicons name="add-circle-outline" size={28} color={theme.primary} />
                 </TouchableOpacity>
               </View>
             )}
@@ -160,17 +170,24 @@ export default function TabTwoScreen() {
     );
   }
 
-  if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#084C61" /></View>;
+  if (loading && !refreshing) {
+    return <View style={styles.center}><ActivityIndicator size="large" color={theme.primary} /></View>;
   }
 
-  if (error) {
-    return <View style={styles.center}><Text style={styles.errorText}>{error}</Text></View>;
+  if (error && !refreshing) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchProducts}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <StatusBar barStyle={theme.background === '#FFFFFF' ? "dark-content" : "light-content"} backgroundColor={theme.background} />
       <View style={styles.topSection}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 }}>
           <Image
@@ -184,9 +201,10 @@ export default function TabTwoScreen() {
         </View>
 
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} style={styles.searchIcon} />
           <TextInput
             placeholder="Search here..."
+            placeholderTextColor={theme.text || '#888'}
             value={searchQuery}
             onChangeText={setSearchQuery}
             style={styles.searchInput}
@@ -211,9 +229,11 @@ export default function TabTwoScreen() {
                       <Ionicons
                         name={selectedCategories.includes(item) ? 'checkbox-outline' : 'square-outline'}
                         size={24}
-                        color="#084C61"
+                        color={theme.primary}
                       />
-                      <Text style={{ marginLeft: 10 }}>{item}</Text>
+                      <Text style={{ marginLeft: 10, color: theme.text }}>
+                        {item}
+                      </Text>
                     </TouchableOpacity>
                   )}
                 />
@@ -228,6 +248,7 @@ export default function TabTwoScreen() {
             <TextInput
               style={styles.priceInput}
               placeholder="Min"
+              placeholderTextColor={theme.text || '#888'}
               keyboardType="numeric"
               value={minPrice !== null ? String(minPrice) : ''}
               onChangeText={(text) => setMinPrice(text ? parseInt(text) : null)}
@@ -235,6 +256,7 @@ export default function TabTwoScreen() {
             <TextInput
               style={styles.priceInput}
               placeholder="Max"
+              placeholderTextColor={theme.text || '#888'}
               keyboardType="numeric"
               value={maxPrice !== null ? String(maxPrice) : ''}
               onChangeText={(text) => setMaxPrice(text ? parseInt(text) : null)}
@@ -246,6 +268,9 @@ export default function TabTwoScreen() {
       {filteredProducts.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>No products found.</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchProducts}>
+            <Text style={styles.retryButtonText}>Refresh</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -255,6 +280,16 @@ export default function TabTwoScreen() {
           numColumns={2}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.primary]}
+              tintColor={theme.primary}
+              title="Pull to refresh"
+              titleColor={theme.text}
+            />
+          }
         />
       )}
     </SafeAreaView>
@@ -263,178 +298,198 @@ export default function TabTwoScreen() {
 
 const CARD_WIDTH = width / 2 - 24;
 
-const styles = StyleSheet.create({
+const getStyles = (theme: { background: string; text: string; primary: string; secondary: string; border: string; card: string; error: string; }) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 40,
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.background,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: theme.background,
   },
   errorText: {
-    color: 'red',
     fontSize: 16,
+    color: theme.error,
+    textAlign: 'center',
+    marginBottom: 10,
   },
   noInternetText: {
-    fontSize: 18,
-    color: '#555',
+    fontSize: 16,
+    color: theme.error,
     textAlign: 'center',
-    paddingHorizontal: 20,
   },
   topSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    backgroundColor: '#FFF',
+    padding: 16,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 + 16 : 0,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   greeting: {
-    fontSize: 18,
-    marginVertical: 10,
-    color: '#333',
+    fontSize: 16,
+    color: theme.text,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F1F1',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    backgroundColor: theme.secondary,
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginVertical: 10,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
+    color: theme.text,
   },
   searchInput: {
     flex: 1,
-    height: 40,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    color: theme.text,
   },
   filterRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginVertical: 10,
   },
   dropdown: {
-    padding: 10,
-    backgroundColor: '#eee',
-    borderRadius: 8,
+    flex: 1,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginRight: 10,
+    backgroundColor: theme.secondary,
   },
   dropdownText: {
-    fontSize: 16,
+    color: theme.text,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
     width: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.background,
     borderRadius: 10,
     padding: 20,
+    maxHeight: '60%',
   },
   categoryItem: {
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  priceFilter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  priceInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginHorizontal: 5,
-    width: 70,
-    height: 40,
+    borderBottomColor: theme.border,
   },
   applyButton: {
-    backgroundColor: '#084C61',
+    backgroundColor: theme.primary,
     padding: 10,
-    borderRadius: 8,
-    marginTop: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 15,
   },
   applyButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    textAlign: 'center',
+  },
+  priceFilter: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  priceInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginHorizontal: 5,
+    backgroundColor: theme.secondary,
+    color: theme.text,
   },
   listContent: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    padding: 8,
   },
   card: {
-    backgroundColor: '#FFF',
-    margin: 7,
-    borderRadius: 12,
-    overflow: 'hidden',
     width: CARD_WIDTH,
-    elevation: 4,
+    margin: 8,
+    backgroundColor: theme.card,
+    borderRadius: 10,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   productImage: {
     width: '100%',
-    height: 150,
+    height: 120,
+    resizeMode: 'cover',
   },
   infoContainer: {
     padding: 10,
   },
   productName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#333',
-  },
-  productPrice: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#084C61',
+    marginBottom: 5,
+    color: theme.text,
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.primary,
     marginBottom: 5,
   },
   productInfo: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 10,
+    color: theme.text,
+    opacity: 0.7,
+    marginBottom: 8,
   },
   button: {
-    backgroundColor: '#084C61',
+    backgroundColor: theme.primary,
     paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   counterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     marginTop: 5,
   },
   counterText: {
     fontSize: 16,
-    marginHorizontal: 10,
     fontWeight: 'bold',
-    color: '#084C61',
+    color: theme.text,
+  },
+  retryButton: {
+    backgroundColor: theme.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

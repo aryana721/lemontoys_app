@@ -9,21 +9,21 @@
       "distribution": "internal",
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps",
-        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+        "EXPO_PUBLIC_HOST": "https://lemontoys-server.vercel.app/"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps",
-        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+        "EXPO_PUBLIC_HOST": "https://lemontoys-server.vercel.app/"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps",
-        "EXPO_PUBLIC_HOST": "https://lemontoys-server.onrender.com"
+        "EXPO_PUBLIC_HOST": "https://lemontoys-server.vercel.app/"
       }
     }
   },

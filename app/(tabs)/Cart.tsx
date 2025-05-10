@@ -9,7 +9,7 @@ import {
   Platform,
   useWindowDimensions,
   Alert,
-  Modal
+  Appearance
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/Providers/CartProvider';
@@ -20,6 +20,7 @@ import { useAuth } from '@/Providers/AuthProvider';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native';
 import { useNetwork } from '@/Providers/NetworkProvider';
+import { useTheme } from '@/Providers/ThemeProvider';
 
 // Define proper interfaces
 interface CartItem {
@@ -55,6 +56,10 @@ const CATEGORY_PRICE_MAP = {
 };
 
 export default function Cart() {
+  // Use theme from the existing ThemeProvider
+  const theme = useTheme();
+  const isDark = Appearance.getColorScheme() === 'dark';
+  
   // Navigation
   const navigation = useNavigation();
   const isConnected = useNetwork();
@@ -129,7 +134,7 @@ export default function Cart() {
       setIsLoading(true);
       
       const response = await axios.post<OrderResponse>(
-        `https://lemontoys-server.onrender.com/order`, 
+        `https://lemontoys-server.vercel.app/order`, 
         { orderDetails }
       );
       
@@ -199,7 +204,7 @@ export default function Cart() {
       try {
         setIsLoading(true);
         const productIds = CartItems.map(item => item.productId);
-        const response = await axios.post(`https://lemontoys-server.onrender.com/details`, {
+        const response = await axios.post(`https://lemontoys-server.vercel.app/details`, {
           itemIds: productIds,
         });
 
@@ -233,27 +238,111 @@ export default function Cart() {
     }).format(amount);
   };
 
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    cartItem: {
+      backgroundColor: theme.card,
+      shadowColor: '#000000',
+    },
+    productImage: {
+      backgroundColor: theme.background,
+    },
+    title: {
+      color: theme.text,
+    },
+    subtitle: {
+      color: theme.secondary,
+    },
+    price: {
+      color: theme.primary,
+    },
+    totalPrice: {
+      color: theme.secondary,
+    },
+    quantityText: {
+      color: theme.text,
+    },
+    cartTitle: {
+      color: theme.text,
+    },
+    clearCartText: {
+      color: theme.error,
+    },
+    loadingOverlay: {
+      backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    },
+    summaryBackground: {
+      backgroundColor: theme.card,
+      shadowColor: '#000000',
+    },
+    summaryTitle: {
+      color: theme.text,
+    },
+    summaryLabel: {
+      color: theme.secondary,
+    },
+    summaryValue: {
+      color: theme.text,
+    },
+    divider: {
+      backgroundColor: theme.border,
+    },
+    totalLabel: {
+      color: theme.text,
+    },
+    totalValue: {
+      color: theme.primary,
+    },
+    emptyCartText: {
+      color: theme.secondary,
+    },
+    noConnectionText: {
+      color: theme.error,
+    },
+    noConnectionSubtext: {
+      color: theme.secondary,
+    },
+  };
+
   // Render each cart item
   const renderItem = ({ item }: { item: CartItem }) => {
     const itemPrice = (item[priceKey] || 0) + (item.Price || 0);
     const itemTotal = itemPrice * item.quantity;
 
     return (
-      <View style={[styles.cartItem, { width: width > 500 ? width * 0.8 : width - 32 }]}>
+      <View 
+        style={[
+          styles.cartItem, 
+          dynamicStyles.cartItem,
+          { width: width > 500 ? width * 0.8 : width - 32 }
+        ]}
+      >
         <Image
           source={{ uri: item.ProductImageURL }}
-          style={[styles.productImage, { width: width * 0.15, height: width * 0.15 }]}
+          style={[
+            styles.productImage, 
+            dynamicStyles.productImage,
+            { width: width * 0.15, height: width * 0.15 }
+          ]}
           resizeMode="contain"
         />
         <View style={styles.productInfo}>
-          <Text style={styles.title} numberOfLines={1}>{item.ProductName}</Text>
-          <Text style={styles.subtitle}>{item.Category}</Text>
+          <Text style={[styles.title, dynamicStyles.title]} numberOfLines={1}>
+            {item.ProductName}
+          </Text>
+          <Text style={[styles.subtitle, dynamicStyles.subtitle]}>
+            {item.Category}
+          </Text>
           <View style={styles.priceRow}>
-            <Text style={styles.price}>
+            <Text style={[styles.price, dynamicStyles.price]}>
               {formatCurrency(itemPrice)}
             </Text>
             {item.quantity > 1 && (
-              <Text style={styles.totalPrice}>
+              <Text style={[styles.totalPrice, dynamicStyles.totalPrice]}>
                 Total: {formatCurrency(itemTotal)}
               </Text>
             )}
@@ -264,9 +353,9 @@ export default function Cart() {
               disabled={isLoading}
               style={styles.quantityButton}
             >
-              <Ionicons name="remove-circle-outline" size={24} color="#0d9488" />
+              <Ionicons name="remove-circle-outline" size={24} color={theme.primary} />
             </TouchableOpacity>
-            <Text style={styles.quantityText}>
+            <Text style={[styles.quantityText, dynamicStyles.quantityText]}>
               {item.quantity.toString().padStart(2, '0')}
             </Text>
             <TouchableOpacity 
@@ -274,7 +363,7 @@ export default function Cart() {
               disabled={isLoading}
               style={styles.quantityButton}
             >
-              <Ionicons name="add-circle-outline" size={24} color="#0d9488" />
+              <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -290,7 +379,7 @@ export default function Cart() {
           onPress={() => confirmDelete(item)}
           disabled={isLoading}
         >
-          <Ionicons name="trash-outline" size={24} color="red" />
+          <Ionicons name="trash-outline" size={24} color={theme.error} />
         </TouchableOpacity>
       </View>
     );
@@ -299,7 +388,9 @@ export default function Cart() {
   // Header with clear all button
   const CartHeader = () => (
     <View style={[styles.cartHeader, { width: width > 500 ? width * 0.8 : width - 32 }]}>
-      <Text style={styles.cartTitle}>Shopping Cart ({CartItems.length})</Text>
+      <Text style={[styles.cartTitle, dynamicStyles.cartTitle]}>
+        Shopping Cart ({CartItems.length})
+      </Text>
       <TouchableOpacity
         onPress={() => {
           if (Platform.OS === 'web') {
@@ -320,32 +411,45 @@ export default function Cart() {
         disabled={isLoading}
         style={styles.clearCartButton}
       >
-        <Text style={styles.clearCartText}>Clear All</Text>
+        <Text style={[styles.clearCartText, dynamicStyles.clearCartText]}>Clear All</Text>
       </TouchableOpacity>
     </View>
   );
 
   // Order summary footer component
   const OrderSummary = () => (
-    <View style={[styles.summary, { width: width > 500 ? width * 0.8 : width - 32 }]}>
-      <Text style={styles.summaryTitle}>Order Summary</Text>
+    <View 
+      style={[
+        styles.summary, 
+        dynamicStyles.summaryBackground,
+        { width: width > 500 ? width * 0.8 : width - 32 }
+      ]}
+    >
+      <Text style={[styles.summaryTitle, dynamicStyles.summaryTitle]}>Order Summary</Text>
 
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Items ({detailedCartItems.length})</Text>
-        <Text style={styles.summaryValue}>{formatCurrency(calculateSubtotal())}</Text>
+        <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>
+          Items ({detailedCartItems.length})
+        </Text>
+        <Text style={[styles.summaryValue, dynamicStyles.summaryValue]}>
+          {formatCurrency(calculateSubtotal())}
+        </Text>
       </View>
       
-      <View style={styles.divider} />
+      <View style={[styles.divider, dynamicStyles.divider]} />
       
       <View style={styles.summaryRow}>
-        <Text style={styles.totalLabel}>Total Amount</Text>
-        <Text style={styles.totalValue}>{formatCurrency(calculateSubtotal())}</Text>
+        <Text style={[styles.totalLabel, dynamicStyles.totalLabel]}>Total Amount</Text>
+        <Text style={[styles.totalValue, dynamicStyles.totalValue]}>
+          {formatCurrency(calculateSubtotal())}
+        </Text>
       </View>
       
       <TouchableOpacity 
         style={[
           styles.placeOrderButton, 
-          isLoading ? styles.disabledButton : {}
+          isLoading ? styles.disabledButton : {},
+          { backgroundColor: theme.primary }
         ]} 
         onPress={handleOrderPlacement}
         disabled={isLoading}
@@ -361,16 +465,24 @@ export default function Cart() {
 
   // Empty cart view
   const EmptyCartView = () => (
-    <SafeAreaView style={styles.emptyCartContainer}>
+    <SafeAreaView style={[styles.emptyCartContainer, dynamicStyles.container]}>
       <LottieView
         source={require('../../assets/animation/empty-cart.json')}
         autoPlay
         loop
         style={styles.emptyCartAnimation}
+        colorFilters={[
+          {
+            keypath: "**",
+            color: isDark ? "#ffffff" : "#000000"
+          }
+        ]}
       />
-      <Text style={styles.emptyCartText}>Your Cart is Empty!</Text>
+      <Text style={[styles.emptyCartText, dynamicStyles.emptyCartText]}>
+        Your Cart is Empty!
+      </Text>
       <TouchableOpacity 
-        style={styles.continueShoppingButton}
+        style={[styles.continueShoppingButton, { backgroundColor: theme.primary }]}
         onPress={navigateToProducts}
       >
         <Text style={styles.continueShoppingText}>Continue Shopping</Text>
@@ -380,15 +492,25 @@ export default function Cart() {
 
   // No internet connection view
   const NoConnectionView = () => (
-    <SafeAreaView style={styles.emptyCartContainer}>
+    <SafeAreaView style={[styles.emptyCartContainer, dynamicStyles.container]}>
       <LottieView
-        source={require('../../assets/animation/no-connection.json')} // Assuming you have this animation
+        source={require('../../assets/animation/no-connection.json')}
         autoPlay
         loop
         style={styles.emptyCartAnimation}
+        colorFilters={[
+          {
+            keypath: "**",
+            color: isDark ? "#ffffff" : "#000000"
+          }
+        ]}
       />
-      <Text style={styles.noConnectionText}>No Internet Connection</Text>
-      <Text style={styles.noConnectionSubtext}>Please check your connection and try again</Text>
+      <Text style={[styles.noConnectionText, dynamicStyles.noConnectionText]}>
+        No Internet Connection
+      </Text>
+      <Text style={[styles.noConnectionSubtext, dynamicStyles.noConnectionSubtext]}>
+        Please check your connection and try again
+      </Text>
     </SafeAreaView>
   );
 
@@ -402,10 +524,10 @@ export default function Cart() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
       {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#0ea5e9" />
+        <View style={[styles.loadingOverlay, dynamicStyles.loadingOverlay]}>
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       )}
 
@@ -421,6 +543,8 @@ export default function Cart() {
         ListFooterComponent={<OrderSummary />}
       />
 
+      {/* Theme toggle button removed as we're using the system theme */}
+
       {/* Hidden success animation to pre-load */}
       <View style={{ width: 0, height: 0, overflow: 'hidden' }}>
         <LottieView
@@ -428,6 +552,12 @@ export default function Cart() {
           source={require('../../assets/animation/order-success.json')}
           autoPlay={false}
           loop={false}
+          colorFilters={[
+            {
+              keypath: "**",
+              color: isDark ? "#ffffff" : "#000000"
+            }
+          ]}
         />
       </View>
     </SafeAreaView>
@@ -437,10 +567,9 @@ export default function Cart() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   contentContainer: {
-    padding: 16,
+    padding: 50,
     paddingBottom: Platform.OS === 'ios' ? 40 : 16, // Extra padding for iOS
   },
   cartHeader: {
@@ -453,13 +582,11 @@ const styles = StyleSheet.create({
   cartTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
   },
   clearCartButton: {
     padding: 8,
   },
   clearCartText: {
-    color: '#ef4444',
     fontWeight: '600',
   },
   loadingOverlay: {
@@ -468,7 +595,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -476,11 +602,9 @@ const styles = StyleSheet.create({
   cartItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -496,7 +620,6 @@ const styles = StyleSheet.create({
   productImage: {
     borderRadius: 8,
     marginRight: 16,
-    backgroundColor: '#fff',
   },
   productInfo: {
     flex: 1,
@@ -504,11 +627,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
   },
   subtitle: {
     fontSize: 14,
-    color: '#6b7280',
     marginTop: 2,
   },
   priceRow: {
@@ -520,11 +641,9 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#10b981',
   },
   totalPrice: {
     fontSize: 14,
-    color: '#6b7280',
     fontWeight: '500',
   },
   quantityControl: {
@@ -546,13 +665,11 @@ const styles = StyleSheet.create({
   },
   summary: {
     marginTop: 16,
-    backgroundColor: '#f3f4f6',
     borderRadius: 16,
     padding: 20,
     alignSelf: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
@@ -569,7 +686,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#111827',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -579,27 +695,22 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 16,
-    color: '#4b5563',
   },
   summaryValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#111827',
   },
   divider: {
     height: 1,
-    backgroundColor: '#e5e7eb',
     marginVertical: 12,
   },
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
   },
   totalValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#10b981',
   },
   disabledButton: {
     opacity: 0.7,
@@ -607,7 +718,6 @@ const styles = StyleSheet.create({
   },
   placeOrderButton: {
     marginTop: 20,
-    backgroundColor: '#0ea5e9',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -635,7 +745,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
     padding: 16,
   },
   emptyCartAnimation: {
@@ -647,23 +756,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 20,
     marginBottom: 24,
-    color: '#6b7280',
   },
   noConnectionText: {
     fontSize: 20,
     fontWeight: '600',
     marginTop: 20,
-    color: '#ef4444',
   },
   noConnectionSubtext: {
     fontSize: 16,
     marginTop: 8,
     marginBottom: 24,
-    color: '#6b7280',
     textAlign: 'center',
   },
   continueShoppingButton: {
-    backgroundColor: '#0ea5e9',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -673,4 +778,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+
 });
